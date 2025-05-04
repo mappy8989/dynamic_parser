@@ -6,7 +6,6 @@
 
 namespace stdx {
 
-// замените болванку функции scan на рабочую версию
 template <typename... Ts>
 std::expected<details::scan_result<Ts...>, details::scan_error>
 scan(std::string_view input, std::string_view format) {

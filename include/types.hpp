@@ -1,6 +1,8 @@
 #pragma once
 
+#include <string>
 #include <tuple>
+
 namespace stdx::details {
 
 // Класс для хранения ошибки неуспешного сканирования
