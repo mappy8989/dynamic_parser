@@ -10,8 +10,6 @@
 
 namespace stdx::details {
 
-// здесь ваш код
-
 // Функция для парсинга значения с учетом спецификатора формата
 template <typename T>
 std::expected<T, scan_error> parse_value_with_format(std::string_view input,
@@ -35,7 +33,8 @@ std::expected<T, scan_error> parse_value_with_format(std::string_view input,
       ret_val = std::stoul(input.data(), &pos);
       type_name = "unsigned int";
     } else {
-      return std::unexpected(scan_error{"Unexpected type format"});
+      return std::unexpected(
+          scan_error{"Unexpected type format " + std::string(fmt)});
     }
 
     if (pos != input.size()) {
@@ -58,7 +57,8 @@ parse_value_with_format(std::string_view input, std::string_view fmt) {
   }
 
   if (fmt != "%s") {
-    return std::unexpected(scan_error{"Unexpected type format"});
+    return std::unexpected(
+        scan_error{"Unexpected type format" + std::string(fmt)});
   }
   return std::string(input);
 }
