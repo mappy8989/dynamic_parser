@@ -11,15 +11,13 @@ set(target scan)
 
 add_library(${target} INTERFACE)
 
-target_include_directories(${target} INTERFACE include/ )
-add_executable(${target}_impl src/main.cpp)
-target_link_libraries(${target}_impl PRIVATE ${target})
+target_include_directories(${target} INTERFACE include/)
 
 set(test_target scan_tests)
 
-#add_executable(${test_target} tests/main.cpp tests/scan_test.cpp)
-#target_link_libraries(${test_target} PRIVATE ${target} GTest::GTest GTest::Main)
+add_executable(${test_target} tests/main.cpp tests/scan_test.cpp)
+target_link_libraries(${test_target} PRIVATE ${target} GTest::GTest GTest::Main)
 
 # Включаем тестирование
 enable_testing()
-#add_test(NAME ${test_target} COMMAND ${PROJECT_NAME}_tests)
+add_test(NAME ${test_target} COMMAND ${PROJECT_NAME}_tests)
