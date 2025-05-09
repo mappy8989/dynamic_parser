@@ -1,5 +1,8 @@
 #pragma once
 
+#include <charconv>
+#include <concepts>
+#include <cstdint>
 #include <expected>
 #include <string>
 #include <string_view>
@@ -10,59 +13,76 @@
 
 namespace stdx::details {
 
-// Функция для парсинга значения с
-// учетом спецификатора формата
 template <typename T>
-std::expected<T, scan_error> parse_value_with_format(std::string_view input, std::string_view fmt) {
+inline std::expected<T, scan_error> parse_value_with_format(std::string_view input,
+                                                            std::string_view fmt) {
+    return std::unexpected(scan_error{"Unsupported type"});
+}
+
+template <typename T>
+concept IntegrTypes = std::same_as<T, int8_t> || std::same_as<T, int16_t> ||
+                      std::same_as<T, int32_t> || std::same_as<T, int64_t>;
+template <typename T>
+concept UnsignedIntegrTypes = std::same_as<T, uint8_t> || std::same_as<T, uint16_t> ||
+                              std::same_as<T, uint32_t> || std::same_as<T, uint64_t>;
+template <typename T>
+concept FloatingTypes = std::same_as<T, float> || std::same_as<T, double>;
+
+template <typename T>
+    requires IntegrTypes<T> || UnsignedIntegrTypes<T> || FloatingTypes<T>
+inline std::expected<T, scan_error> parse_value_with_format(std::string_view input,
+                                                            std::string_view fmt) {
     if (input.empty()) {
         return std::unexpected(scan_error{"Input is empty"});
     }
 
-    T ret_val;
-    std::size_t pos = 0;
-    std::string type_name;
+    auto unexpected_type_error = [](std::string_view format) -> std::expected<T, scan_error> {
+        return std::unexpected(scan_error{"Unexpected type "
+                                          "format " +
+                                          std::string(format)});
+    };
 
-    try {
-        if (fmt == "%d") {
-            ret_val = std::stoi(input.data(), &pos);
-            type_name = "int";
-        } else if (fmt == "%f") {
-            ret_val = std::stod(input.data(), &pos);
-            type_name = "float";
-        } else if (fmt == "%u") {
-            ret_val = std::stoul(input.data(), &pos);
-            type_name = "unsigned int";
-        } else {
-            return std::unexpected(scan_error{"Unexpected type "
-                                              "format " +
-                                              std::string(fmt)});
+    if constexpr (IntegrTypes<T>) {
+        if (fmt != "%d") {
+            return unexpected_type_error(fmt);
         }
-
-        if (pos != input.size()) {
-            return std::unexpected(scan_error{"Unable to "
-                                              "format " +
-                                              std::string(input) + " to " + type_name});
+    } else if constexpr (UnsignedIntegrTypes<T>) {
+        if (fmt != "%u") {
+            return unexpected_type_error(fmt);
         }
-    } catch (...) {
-        return std::unexpected(scan_error{"Unable to format " + std::string(input) + " to int"});
+    } else if constexpr (FloatingTypes<T>) {
+        if (fmt != "%f") {
+            return unexpected_type_error(fmt);
+        }
     }
 
-    return ret_val;
+    T value;
+    auto result = std::from_chars(input.data(), input.data() + input.size(), value);
+
+    if (result.ec == std::errc()) {
+        return value;
+    } else if (result.ec == std::errc::invalid_argument) {
+        return std::unexpected(scan_error{"Invalid argument"});
+    } else if (result.ec == std::errc::result_out_of_range) {
+        return std::unexpected(scan_error{"Out of range"});
+    }
+
+    return std::unexpected(scan_error{"Unspecified error"});
 }
 
 template <>
-inline std::expected<std::string, scan_error> parse_value_with_format(std::string_view input,
-                                                                      std::string_view fmt) {
+inline std::expected<std::string_view, scan_error> parse_value_with_format(std::string_view input,
+                                                                           std::string_view fmt) {
     if (input.empty()) {
         return std::unexpected(scan_error{"Input is empty"});
     }
 
     if (fmt != "%s") {
         return std::unexpected(scan_error{"Unexpected type "
-                                          "format" +
+                                          "format " +
                                           std::string(fmt)});
     }
-    return std::string(input);
+    return input;
 }
 
 // Функция для проверки корректности
