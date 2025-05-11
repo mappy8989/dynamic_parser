@@ -61,7 +61,7 @@ std::expected<details::scan_result<Ts...>, details::scan_error> scan(std::string
     auto values_opt = extract_values(std::index_sequence_for<Ts...>{});
 
     if (!values_opt.has_value()) {
-        return std::unexpected(error);
+        return std::unexpected(details::scan_error{error});
     }
 
     return details::scan_result<Ts...>{std::move(values_opt.value())};
