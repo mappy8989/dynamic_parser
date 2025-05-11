@@ -43,15 +43,15 @@ inline std::expected<T, scan_error> parse_value_with_format(std::string_view inp
     };
 
     if constexpr (IntegrTypes<T>) {
-        if (fmt != "%d") {
+        if (!(fmt == "%d" || fmt.empty())) {
             return unexpected_type_error(fmt);
         }
     } else if constexpr (UnsignedIntegrTypes<T>) {
-        if (fmt != "%u") {
+        if ((fmt != "%u" || fmt.empty())) {
             return unexpected_type_error(fmt);
         }
     } else if constexpr (FloatingTypes<T>) {
-        if (fmt != "%f") {
+        if ((fmt != "%f" || fmt.empty())) {
             return unexpected_type_error(fmt);
         }
     }
@@ -77,7 +77,7 @@ inline std::expected<std::string_view, scan_error> parse_value_with_format(std::
         return std::unexpected(scan_error{"Input is empty"});
     }
 
-    if (fmt != "%s") {
+    if (!(fmt == "%s" || fmt.empty())) {
         return std::unexpected(scan_error{"Unexpected type "
                                           "format " +
                                           std::string(fmt)});
